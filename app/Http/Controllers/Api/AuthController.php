@@ -16,15 +16,15 @@ public function register(Request $request)
     $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email',
-        'no_hp' => 'required|string|max:20',
+        'no_hp' => 'required|string|max:20',   // ditambahkan ke validate()
         'password' => 'required|min:6|confirmed',
     ]);
 
     $user = User::create([
         'role_id' => 2, // Default sebagai Warga
         'name' => $request->name,
+        'no_hp' => $request->no_hp,   // ditambahkan ke User::create()
         'email' => $request->email,
-        'no_hp' => $request->no_hp,
         'password' => Hash::make($request->password),
     ]);
 
