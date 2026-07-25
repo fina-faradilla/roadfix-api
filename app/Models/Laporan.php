@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Laporan extends Model
 {
+    protected $table = 'laporans';
+
     protected $fillable = [
         'user_id',
         'kategori_id',
@@ -21,21 +24,56 @@ class Laporan extends Model
         'status',
     ];
 
-    // Relasi ke User
+    protected $casts = [
+        'latitude' => 'double',
+        'longitude' => 'double',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONSHIP
+    |--------------------------------------------------------------------------
+    */
+
+    // User (Pelapor)
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relasi ke Kategori Kerusakan
+    // Kategori Kerusakan
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(KategoriKerusakan::class, 'kategori_id');
     }
 
-    // Relasi ke Tindak Lanjut
+    // Tindak Lanjut
     public function tindakLanjut(): HasOne
     {
         return $this->hasOne(TindakLanjut::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSOR
+    |--------------------------------------------------------------------------
+    */
+
+    // Nama pelapor otomatis
+    protected function namaPelapor(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->user?->name ?? '-',
+        );
+    }
+
+    // URL Foto
+    protected function fotoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->foto
+                ? asset('storage/' . $this->foto)
+                : null,
+        );
     }
 }
