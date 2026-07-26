@@ -1,24 +1,31 @@
 <?php
- 
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\KategoriKerusakanApiController;
 use App\Http\Controllers\Api\LaporanApiController;
 use App\Http\Controllers\Api\Admin\LaporanApiController as AdminLaporanApiController;
- 
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
- 
+
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth:sanctum');
- 
-// Data referensi, boleh publik
+
+// Data referensi kategori — baca boleh publik, tapi tambah/ubah/hapus
+// dibatasi cuma admin (role_id = 1), sama seperti laporan admin.
 Route::get('/kategori', [KategoriKerusakanApiController::class, 'index']);
- 
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::post('/kategori', [KategoriKerusakanApiController::class, 'store']);
+    Route::put('/kategori/{kategoriKerusakan}', [KategoriKerusakanApiController::class, 'update']);
+    Route::delete('/kategori/{kategoriKerusakan}', [KategoriKerusakanApiController::class, 'destroy']);
+});
+
 // Portal Warga: hanya lihat & buat laporan MILIK SENDIRI.
 // Login wajib (siapa pun role-nya), tapi query di controller sudah
 // difilter where('user_id', auth id) jadi warga tidak bisa lihat/edit
@@ -27,7 +34,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/laporan', [LaporanApiController::class, 'index']);
     Route::post('/laporan', [LaporanApiController::class, 'store']);
 });
- 
+
 // Portal Admin/Dinas: lihat & kelola SEMUA laporan.
 // Middleware 'admin' sekarang dipasang — sebelumnya cuma auth:sanctum,
 // artinya warga biasa yang login pun bisa akses endpoint ini. Sekarang
@@ -41,4 +48,4 @@ Route::prefix('admin')
         Route::delete('/laporan/{laporan}', [AdminLaporanApiController::class, 'destroy']);
         Route::patch('/laporan/{laporan}/verifikasi', [AdminLaporanApiController::class, 'verifikasi']);
     });
- 
+

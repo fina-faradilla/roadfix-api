@@ -13,7 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Daftarkan alias middleware admin
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
+
+        // TAMBAHKAN INI: Jangan redirect ke halaman login untuk API,
+        // tapi kembalikan response JSON 401 Unauthorized
+        $middleware->redirectGuestsTo(fn () => abort(401, 'Unauthenticated.'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
