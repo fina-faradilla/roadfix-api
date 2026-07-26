@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Laporan;
+use App\Models\TindakLanjut;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,7 @@ class LaporanApiController extends Controller
 
     public function index(Request $request)
     {
-        $query = Laporan::with(['user', 'kategori'])->latest();
+        $query = Laporan::with(['user', 'kategori', 'tindakLanjuts.user'])->latest();
 
         if ($request->filled('kategori_id')) {
             $query->where('kategori_id', $request->kategori_id);
@@ -53,7 +54,7 @@ $data['user_id'] = auth()->id();
             $data['foto'] = $request->file('foto')->store('laporan', 'public');
         }
 
-        $laporan = Laporan::create($data)->load(['user', 'kategori']);
+        $laporan = Laporan::create($data)->load(['user', 'kategori', 'tindakLanjuts.user']);
 
         return response()->json($this->transform($laporan), 201);
     }
@@ -73,7 +74,7 @@ $data['user_id'] = auth()->id();
 
         $laporan->update($data);
 
-        return response()->json($this->transform($laporan->fresh(['user', 'kategori'])));
+        return response()->json($this->transform($laporan->fresh(['user', 'kategori', 'tindakLanjuts.user'])));
     }
 
     public function destroy(Laporan $laporan)
@@ -100,7 +101,34 @@ $data['user_id'] = auth()->id();
 
         $laporan->update(['status' => $next]);
 
-        return response()->json($this->transform($laporan->fresh(['user', 'kategori'])));
+        return response()->json($this->transform($laporan->fresh(['user', 'kategori', 'tindakLanjuts.user'])));
+    }
+
+    /// POST /admin/laporan/{laporan}/tindak-lanjut
+    /// Admin mencatat perkembangan penanganan laporan. Setiap entri baru
+    /// juga langsung memperbarui status laporan supaya konsisten dengan
+    /// apa yang dilihat warga (bukan cuma catatan yang "nyangkut" tanpa
+    /// mengubah status laporannya).
+    public function tambahTindakLanjut(Request $request, Laporan $laporan)
+    {
+        $data = $request->validate([
+            'status'  => ['required', 'in:Diproses,Selesai'],
+            'catatan' => ['required', 'string'],
+        ]);
+
+        TindakLanjut::create([
+            'laporan_id' => $laporan->id,
+            'user_id'    => auth()->id(),
+            'status'     => $data['status'],
+            'catatan'    => $data['catatan'],
+        ]);
+
+        $laporan->update(['status' => $data['status']]);
+
+        return response()->json(
+            $this->transform($laporan->fresh(['user', 'kategori', 'tindakLanjuts.user'])),
+            201
+        );
     }
 
     private function transform(Laporan $laporan): array
@@ -119,6 +147,13 @@ $data['user_id'] = auth()->id();
         'latitude'          => (float) $laporan->latitude,
         'longitude'         => (float) $laporan->longitude,
         'tanggal'           => $laporan->created_at->translatedFormat('d M Y'),
+        'tindak_lanjut'     => $laporan->tindakLanjuts->map(fn (TindakLanjut $t) => [
+            'id'         => $t->id,
+            'status'     => $t->status,
+            'catatan'    => $t->catatan,
+            'admin'      => $t->user?->name,
+            'created_at' => $t->created_at->toIso8601String(),
+        ])->values(),
     ];
 }
 }

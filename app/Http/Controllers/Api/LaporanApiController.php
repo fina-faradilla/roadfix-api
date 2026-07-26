@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Laporan;
+use App\Models\TindakLanjut;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,12 +19,26 @@ class LaporanApiController extends Controller
     /// Riwayat laporan milik user yang login saja.
     public function index(Request $request)
     {
-        $rows = Laporan::with(['user', 'kategori'])
+        $rows = Laporan::with(['user', 'kategori', 'tindakLanjuts.user'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
 
         return response()->json($rows->map(fn (Laporan $l) => $this->transform($l)));
+    }
+
+    /// Detail satu laporan milik user yang login (termasuk riwayat tindak
+    /// lanjut) — dipakai halaman Detail Laporan warga supaya bisa lihat
+    /// perkembangan tanpa perlu muat ulang seluruh daftar.
+    public function show(Request $request, Laporan $laporan)
+    {
+        if ($laporan->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Laporan tidak ditemukan.'], 404);
+        }
+
+        $laporan->load(['user', 'kategori', 'tindakLanjuts.user']);
+
+        return response()->json($this->transform($laporan));
     }
 
     public function store(Request $request)
@@ -48,7 +63,7 @@ class LaporanApiController extends Controller
             $data['foto'] = $request->file('foto')->store('laporan', 'public');
         }
 
-        $laporan = Laporan::create($data)->load(['user', 'kategori']);
+        $laporan = Laporan::create($data)->load(['user', 'kategori', 'tindakLanjuts.user']);
 
         return response()->json($this->transform($laporan), 201);
     }
@@ -69,6 +84,13 @@ class LaporanApiController extends Controller
             'latitude'          => (float) $laporan->latitude,
             'longitude'         => (float) $laporan->longitude,
             'tanggal'           => $laporan->created_at->translatedFormat('d M Y'),
+            'tindak_lanjut'     => $laporan->tindakLanjuts->map(fn (TindakLanjut $t) => [
+                'id'         => $t->id,
+                'status'     => $t->status,
+                'catatan'    => $t->catatan,
+                'admin'      => $t->user?->name,
+                'created_at' => $t->created_at->toIso8601String(),
+            ])->values(),
         ];
     }
 }

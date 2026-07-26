@@ -25,6 +25,7 @@ Route::get('/kategori', [KategoriKerusakanApiController::class, 'index']);
 // punya orang lain.
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/laporan', [LaporanApiController::class, 'index']);
+    Route::get('/laporan/{laporan}', [LaporanApiController::class, 'show']);
     Route::post('/laporan', [LaporanApiController::class, 'store']);
 });
  
@@ -40,6 +41,7 @@ Route::prefix('admin')
         Route::put('/laporan/{laporan}', [AdminLaporanApiController::class, 'update']);
         Route::delete('/laporan/{laporan}', [AdminLaporanApiController::class, 'destroy']);
         Route::patch('/laporan/{laporan}/verifikasi', [AdminLaporanApiController::class, 'verifikasi']);
+        Route::post('/laporan/{laporan}/tindak-lanjut', [AdminLaporanApiController::class, 'tambahTindakLanjut']);
 
         // Kelola Kategori (khusus admin)
         Route::post('/kategori', [KategoriKerusakanApiController::class, 'store']);

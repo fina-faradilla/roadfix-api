@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Laporan extends Model
@@ -47,10 +47,10 @@ class Laporan extends Model
         return $this->belongsTo(KategoriKerusakan::class, 'kategori_id');
     }
 
-    // Tindak Lanjut
-    public function tindakLanjut(): HasOne
+    // Tindak Lanjut (riwayat, bisa lebih dari satu per laporan)
+    public function tindakLanjuts(): HasMany
     {
-        return $this->hasOne(TindakLanjut::class);
+        return $this->hasMany(TindakLanjut::class)->latest();
     }
 
     /*
