@@ -40,5 +40,9 @@ Route::prefix('admin')
         Route::put('/laporan/{laporan}', [AdminLaporanApiController::class, 'update']);
         Route::delete('/laporan/{laporan}', [AdminLaporanApiController::class, 'destroy']);
         Route::patch('/laporan/{laporan}/verifikasi', [AdminLaporanApiController::class, 'verifikasi']);
+
+        // Kelola Kategori (khusus admin)
+        Route::post('/kategori', [KategoriKerusakanApiController::class, 'store']);
+        Route::put('/kategori/{kategori}', [KategoriKerusakanApiController::class, 'update']);
+        Route::delete('/kategori/{kategori}', [KategoriKerusakanApiController::class, 'destroy']);
     });
- 

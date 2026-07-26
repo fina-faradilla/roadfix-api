@@ -65,7 +65,7 @@ class LaporanApiController extends Controller
             'alamat'            => $laporan->alamat,
             'deskripsi'         => $laporan->deskripsi,
             'status'            => $laporan->status,
-            'foto_url'          => $laporan->foto ? Storage::disk('public')->url($laporan->foto) : null,
+            'foto_url'          => $laporan->foto ? url('foto-laporan/' . $laporan->foto) : null,
             'latitude'          => (float) $laporan->latitude,
             'longitude'         => (float) $laporan->longitude,
             'tanggal'           => $laporan->created_at->translatedFormat('d M Y'),
